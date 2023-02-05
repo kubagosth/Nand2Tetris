@@ -43,4 +43,25 @@ CHIP ALU {
 
     PARTS:
    // Put you code here:
+
+   //ZX and ZY flag handling
+   Mux16(a=x, b=false, sel=zx, out=xMux); 
+   Mux16(a=y, b=false, sel=zy, out=yMux);  
+   //NX and NY flag handling
+   Not16(in=xMux, out=xNot); 
+   Mux16(a=xMux, b=xNot, sel=nx, out=outX);
+   Not16(in=yMux, out=yNot);
+   Mux16(a=yMux, b=yNot, sel=ny, out=outY);
+   //F control bit handling
+   And16(a=outX, b=outY, out=andOutXY);
+   Add16(a=outX, b=outY, out=addOutXY);
+   Mux16(a=andOutXY, b=addOutXY, sel=f, out=fOut);
+   //NO control bit handling, out,ng flag
+   Not16(in=fOut, out=fNot);
+   Mux16(a=fOut, b=fNot, sel=no, out=out, out[15]=ng,out[0..7]=zrLow,out[8..15]=zrHigh);
+   //ZR flag handling
+   Or8Way(in=zrLow, out=zrLowOr);
+   Or8Way(in=zrHigh, out=zrHighOr);
+   Or(a=zrLowOr, b=zrHighOr, out=zrOut);
+   Not(in=zrOut, out=zr);
 }
