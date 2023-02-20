@@ -21,7 +21,7 @@
     {
         static void Main(string[] args)
         {
-            string path = "C:\\Users\\jaku0065\\Desktop\\nand2tetris\\nand2tetris\\projects\\08\\FunctionCalls\\SimpleFunction\\SimpleFunction.vm";
+            string path = "C:\\Users\\jaku0065\\Desktop\\nand2tetris\\nand2tetris\\projects\\08\\";
             string[] file = ReadFile(path);
             file = RemoveComments(file);
 
@@ -103,6 +103,7 @@
 
             return file;
         }
+        
         private static string[] Parse(string[] asmFile)
         {
             Dictionary<string, string[]> pushArguments = new Dictionary<string, string[]>()
@@ -129,6 +130,7 @@
                 { "not", new string[] { "@SP", "A=M-1", "M=!M" } },
             };
 
+            int returnCounter = 0;
             string[] file = Array.Empty<string>();
             file = StartingPointers(file);
             foreach (var line in asmFile)
@@ -138,7 +140,7 @@
                     string[] split = line.Split(" "); //Push 
                     string argument = split[1]; // Argument 
                     string index = split[2]; //Index
-                    
+
                     if (argument == "constant")
                     {
                         file = file.Append($"@{index}").ToArray();
@@ -171,7 +173,7 @@
                 else if (line.Contains("pop"))
                 {
                     string[] split = line.Split(" "); //Pop
-                    string argument = split[1];//Argument
+                    string argument = split[1]; //Argument
                     string index = split[2]; //Index
                     if (argument == "local" || argument == "argument" || argument == "this" || argument == "that")
                     {
@@ -236,6 +238,158 @@
                     file = AddToFile(arguments, "not", file);
                 }
 
+                ////////////////////// VM Part 2 /////////////////////////////
+
+                else if (line.Contains("label"))
+                {
+                    string[] split = line.Split(" ");
+                    string label = split[1];
+                    file = file.Append($"({label})").ToArray();
+                }
+                else if (line.Contains("goto"))
+                {
+                    string[] split = line.Split(" ");
+                    string label = split[1];
+                    file = file.Append($"@{label}").ToArray();
+                    file = file.Append($"0;JMP").ToArray();
+                }
+                else if (line.Contains("if-goto"))
+                {
+                    string[] split = line.Split(" ");
+                    string label = split[1];
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@{label}").ToArray();
+                    file = file.Append($"D;JNE").ToArray();
+                }
+                else if (line.Contains("function"))
+                {
+                    string[] split = line.Split(" ");
+                    string functionName = split[1];
+                    string numberOfLocals = split[2];
+                    file = file.Append($"({functionName})").ToArray();
+                    for (int i = 0; i < int.Parse(numberOfLocals); i++)
+                    {
+                        file = file.Append($"@SP").ToArray();
+                        file = file.Append($"A=M").ToArray();
+                        file = file.Append($"M=0").ToArray();
+                        file = file.Append($"@SP").ToArray();
+                        file = file.Append($"M=M+1").ToArray();
+                    }
+                }
+                else if (line.Contains("call"))
+                {
+                    string[] split = line.Split(" ");
+                    string functionName = split[1];
+                    string numberOfArguments = split[2];
+                    file = file.Append($"@{functionName}$ret.{returnCounter}").ToArray();
+                    file = file.Append($"D=A").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=M+1").ToArray();
+                    
+                    file = file.Append($"@LCL").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=M+1").ToArray();
+                    
+                    file = file.Append($"@ARG").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=M+1").ToArray();
+                    
+                    file = file.Append($"@THIS").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=M+1").ToArray();
+                    
+                    file = file.Append($"@THAT").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=M+1").ToArray();
+                    
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@5").ToArray();
+                    file = file.Append($"D=D-A").ToArray();
+                    file = file.Append($"@{numberOfArguments}").ToArray();
+                    file = file.Append($"D=D-A").ToArray();
+                    file = file.Append($"@ARG").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@LCL").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    
+                    file = file.Append($"@{functionName}").ToArray();
+                    file = file.Append($"0;JMP").ToArray();
+                    file = file.Append($"({functionName}$ret.{returnCounter})").ToArray();
+                    returnCounter++;
+                }
+                else if (line.Contains("return"))
+                {
+                    file = file.Append($"@LCL").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@R13").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@5").ToArray();
+                    file = file.Append($"A=D-A").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@R14").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@ARG").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@ARG").ToArray();
+                    file = file.Append($"D=M+1").ToArray();
+                    file = file.Append($"@SP").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@R13").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@THAT").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@R13").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@THIS").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@R13").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@ARG").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@R13").ToArray();
+                    file = file.Append($"AM=M-1").ToArray();
+                    file = file.Append($"D=M").ToArray();
+                    file = file.Append($"@LCL").ToArray();
+                    file = file.Append($"M=D").ToArray();
+                    file = file.Append($"@R14").ToArray();
+                    file = file.Append($"A=M").ToArray();
+                    file = file.Append($"0;JMP").ToArray();
+                }
+                else
+                {
+                    Console.WriteLine(line);
+                }
             }
             return file;
         }
